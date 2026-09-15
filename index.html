@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PACKETCOWBOY — packet.cowboy</title>
+<meta name="description" content="packet.cowboy — security work, Long Island brands, and hardware that has no business working as well as it does.">
+<style>
+  :root{
+    --bg: #070907;
+    --panel: #0c110d;
+    --fg: #3cff7a;
+    --fg-dim: #1e6b3a;
+    --fg-mid: #29a355;
+    --accent: #ffb000;
+    --accent-dim: #8a5f00;
+    --line: #163b22;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ background: var(--bg); }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* CRT scanline + vignette overlay */
+  body::before{
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.10) 3px
+    );
+    mix-blend-mode: multiply;
+  }
+  body::after{
+    content:"";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 49;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+  }
+
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover, a:focus-visible{ text-decoration: underline; }
+  a:focus-visible, button:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+
+  /* ---- framed boxes (double-line terminal border, no rounded corners) ---- */
+  .frame{
+    border: 3px double var(--fg-mid);
+    background: var(--panel);
+    padding: 14px 16px;
+  }
+  .frame + .frame{ margin-top: 22px; }
+
+  .statusbar{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    color: var(--fg-mid);
+  }
+  .statusbar .blink{
+    color: var(--accent);
+    animation: blink 1.4s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity: 0.15; } }
+
+  /* ---- hero / logo ---- */
+  .hero{
+    text-align: center;
+    margin: 34px 0 8px;
+  }
+  pre.ascii{
+    margin: 0 auto;
+    text-align: left;
+    display: inline-block;
+    color: var(--fg);
+    text-shadow: 0 0 6px rgba(60,255,122,0.35);
+    line-height: 1.05;
+    font-size: 13px;
+    white-space: pre;
+  }
+  .ascii-narrow{ display: none; }
+
+  .tagline{
+    margin: 18px auto 0;
+    max-width: 46ch;
+    color: var(--fg-mid);
+  }
+  .tagline .cursor{
+    display: inline-block;
+    width: 0.55em;
+    background: var(--accent);
+    animation: blink 0.9s steps(1) infinite;
+    margin-left: 2px;
+  }
+
+  /* ---- section dividers ---- */
+  .divider{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 16px;
+    color: var(--fg-dim);
+  }
+  .divider::before, .divider::after{
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--fg-dim);
+  }
+  .divider span{
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  /* ---- system info ---- */
+  dl.sysinfo{
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+    margin: 0;
+  }
+  dl.sysinfo dt{ color: var(--fg-mid); }
+  dl.sysinfo dt::after{ content: "."; color: var(--fg-dim); }
+  dl.sysinfo dd{ margin: 0; color: var(--fg); }
+  dl.sysinfo dd .accent{ color: var(--accent); }
+
+  /* ---- bulletin ---- */
+  .bulletin p{ margin: 0 0 12px; color: var(--fg); }
+  .bulletin p:last-child{ margin-bottom: 0; }
+  .bulletin .sig{ color: var(--fg-dim); }
+
+  /* ---- main menu ---- */
+  nav.menu{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+  }
+  nav.menu a{
+    color: var(--fg);
+    display: block;
+    padding: 4px 0;
+  }
+  nav.menu a .key{
+    color: var(--accent);
+    margin-right: 8px;
+  }
+  nav.menu a:hover, nav.menu a:focus-visible{
+    color: var(--accent);
+    text-decoration: none;
+  }
+  nav.menu a:hover .key, nav.menu a:focus-visible .key{ text-decoration: underline; }
+  @media (max-width: 480px){
+    nav.menu{ grid-template-columns: 1fr; }
+  }
+
+  /* ---- directory listing ---- */
+  .dir-row{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 16px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .dir-row:first-of-type{ border-top: none; }
+  .dir-name{ color: var(--accent); }
+  .dir-name a{ color: inherit; }
+  .dir-tag{
+    color: var(--bg);
+    background: var(--fg-mid);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 2px 6px;
+    height: fit-content;
+    align-self: start;
+  }
+  .dir-desc{
+    grid-column: 1 / -1;
+    color: var(--fg-mid);
+    font-size: 13px;
+  }
+
+  /* ---- mail / social ---- */
+  .social-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    color: var(--fg-dim);
+  }
+
+  footer{
+    margin-top: 34px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--fg-dim);
+  }
+  footer a{ color: var(--fg-mid); }
+
+  /* ---- boot-in sequence (single orchestrated moment) ---- */
+  .boot > *{
+    opacity: 0;
+    transform: translateY(4px);
+    animation: bootIn 0.5s ease forwards;
+  }
+  .boot > *:nth-child(1){ animation-delay: 0.05s; }
+  .boot > *:nth-child(2){ animation-delay: 0.20s; }
+  .boot > *:nth-child(3){ animation-delay: 0.35s; }
+  .boot > *:nth-child(4){ animation-delay: 0.50s; }
+  .boot > *:nth-child(5){ animation-delay: 0.65s; }
+  .boot > *:nth-child(6){ animation-delay: 0.80s; }
+  .boot > *:nth-child(7){ animation-delay: 0.95s; }
+  .boot > *:nth-child(8){ animation-delay: 1.10s; }
+  .boot > *:nth-child(9){ animation-delay: 1.25s; }
+  .boot > *:nth-child(10){ animation-delay: 1.40s; }
+  @keyframes bootIn{ to{ opacity: 1; transform: translateY(0); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .boot > *{ animation: none; opacity: 1; transform: none; }
+    .blink, .tagline .cursor{ animation: none; }
+    body::before{ display: none; }
+  }
+
+  @media (max-width: 640px){
+    pre.ascii.ascii-wide{ display: none; }
+    .ascii-narrow{ display: inline-block; }
+    dl.sysinfo{ grid-template-columns: 1fr; }
+    dl.sysinfo dt{ margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap boot">
+
+  <div class="frame statusbar">
+    <span>PACKETCOWBOY BBS · Node 1 </span>
+    <span>STATUS: <span class="blink">ONLINE</span></span>
+  </div>
+
+  <div class="hero">
+    <pre class="ascii ascii-wide" aria-hidden="true">   _|_|_|      _|_|      _|_|_|  _|    _|  _|_|_|_|  _|_|_|_|_|  
+   _|    _|  _|    _|  _|        _|  _|    _|            _|      
+   _|_|_|    _|_|_|_|  _|        _|_|      _|_|_|        _|      
+   _|        _|    _|  _|        _|  _|    _|            _|      
+   _|        _|    _|    _|_|_|  _|    _|  _|_|_|_|      _|      
+
+     _|_|_|    _|_|    _|          _|  _|_|_|      _|_|    _|      _|  
+   _|        _|    _|  _|          _|  _|    _|  _|    _|    _|  _|    
+   _|        _|    _|  _|    _|    _|  _|_|_|    _|    _|      _|      
+   _|        _|    _|    _|  _|  _|    _|    _|  _|    _|      _|      
+     _|_|_|    _|_|        _|  _|      _|_|_|      _|_|        _|      </pre>
+    <pre class="ascii ascii-narrow" aria-hidden="true">╔═══════════════════════╗
+║   PACKET . COWBOY     ║
+╚═══════════════════════╝</pre>
+    <p class="tagline">&gt; packets by day, wrangling and tinkering my projcts by night — security work, NYC & LI  brands, and builds that turn out intresting, sharing as I go<span class="cursor">&nbsp;</span></p>
+  </div>
+
+  <div class="frame">
+    <div class="divider" style="margin-top:0;"><span>SYSTEM INFO</span></div>
+    <dl class="sysinfo">
+      <dt>Handle</dt><dd>packet.cowboy</dd>
+      <dt>Base</dt><dd>New York, NY <span class="accent">(NYC)</span></dd>
+      <dt>Day job</dt><dd>Analyst — IT/Cyber </dd>
+      <dt>Off the clock</dt><dd>tools, brands, and hardware under this handle</dd>
+      <dt>Status</dt><dd><span class="accent">ONLINE</span></dd>
+    </dl>
+  </div>
+
+  <div class="frame">
+    <div class="divider" style="margin-top:0;"><span>MAIN MENU</span></div>
+    <nav class="menu" aria-label="Main">
+      <a href="#about"><span class="key">[1]</span>About</a>
+      <a href="#projects"><span class="key">[2]</span>Projects</a>
+      <a href="#gear"><span class="key">[3]</span>Gear</a>
+      <a href="#articles"><span class="key">[4]</span>Articles</a>
+      <a href="https://github.com/packetcowboy"><span class="key">[5]</span>Writeups / GitHub</a>
+      <a href="#contact"><span class="key">[6]</span>Contact</a>
+    </nav>
+  </div>
+
+  <div id="about" class="frame bulletin">
+    <div class="divider" style="margin-top:0;"><span>BULLETIN</span></div>
+    <p>Fourteen-plus years in IT, the last few years spent learning the cyber side from DFIR, IR, Threat Hunting, Reading Logs and more Logs, SOAR, Firewalls, data center hardware support and maintainence, and anything else that I can get my hands on and try out.</p>
+    <p>Off the clock, packet.cowboy is where the rest of it happens: security tooling, helping a handful of NYC & LI brands, and wardriving and checking out signals of intrest. Everything below is live, shipped, or currently being built and debugged at 2am.</p>
+    <p class="sig">— T.</p>
+  </div>
+
+  <div id="projects" class="frame">
+    <div class="divider" style="margin-top:0;"><span>DIRECTORY</span></div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://securesend.io">SECURESEND.IO</a></div>
+      <div class="dir-tag">LIVE</div>
+      <div class="dir-desc">Zero-knowledge file sharing.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://631mediagroup.com">631MEDIAGROUP.COM</a></div>
+      <div class="dir-tag">LIVE</div>
+      <div class="dir-desc">Tech &amp; digital solutions for Long Island small businesses.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://github.com/packetcowboy">GITHUB.COM/PACKETCOWBOY</a></div>
+      <div class="dir-tag">LINK</div>
+      <div class="dir-desc">Open-source security resources, guides, and training tools.</div>
+    </div>
+
+  </div>
+   <div id="gear" class="frame">
+    <div class="divider" style="margin-top:0;"><span>GEAR I USE</span></div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://flipperzero.one">FLIPPER ZERO</a></div>
+      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-desc">RFID, NFC, sub-GHz, IR, BadUSB — the multitool that started it.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://lab401.com/products/awok-dual-touch-v3">AWOK DUAL TOUCH V3</a></div>
+      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-desc">WiFi/BLE wardriving add-on for the Flipper, GPS-tagged, WiGLE-compatible.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://www.rabbit-labs.com">RABBIT LABS</a></div>
+      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-desc">Flux Capacitor amplified sub-GHz module — stretches Flipper radio range well past stock.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://github.com/JesseCHale/HaleHound-CYD">HALEHOUND (CYD)</a></div>
+      <div class="dir-tag">FIRMWARE</div>
+      <div class="dir-desc">Multi-protocol offensive security firmware for the ESP32 Cheap Yellow Display.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://midwestgadgets.org">MIDWESTERN GADGETS</a></div>
+      <div class="dir-tag">SHOP</div>
+      <div class="dir-desc">NFC repeaters, amplifiers, and field detectors — small-batch, maker-built.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://lab401.com">LAB401</a></div>
+      <div class="dir-tag">SHOP</div>
+      <div class="dir-desc">Go-to shop for Flipper accessories and hardware hacking gear.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name">JUSTCALLMEKOKO</div>
+      <div class="dir-tag">CHANNEL</div>
+      <div class="dir-desc">Access-control and badge-cloning content — worth a watch.</div>
+    </div>
+  </div>
+  
+   <div id="articles" class="frame">
+    <div class="divider" style="margin-top:0;"><span>COOL ARTICLES / GITHUBS</span></div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
+      <div class="dir-tag">ARTICLE</div>
+      <div class="dir-desc">One line on why it's worth a look.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
+      <div class="dir-tag">GITHUB</div>
+      <div class="dir-desc">One line on why it's worth a look.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
+      <div class="dir-tag">ARTICLE</div>
+      <div class="dir-desc">One line on why it's worth a look.</div>
+    </div>
+  </div>
+
+  <div id="contact" class="frame">
+    <div class="divider" style="margin-top:0;"><span>MAIL / SOCIAL</span></div>
+    <p style="margin: 0 0 10px; color: var(--fg-mid);">Send a transmission:</p>
+    <div class="social-list">
+      <a href="mailto:hello@packetcowboy.xyz">hello@packetcowboy.xyz</a>
+      <span>·</span>
+      <a href="https://instagram.com/packetcowboy">Instagram</a>
+      <span>·</span>
+      <a href="https://github.com/packetcowboy">GitHub</a>
+    </div>
+  </div>
+
+  <footer>
+    <div>(c) 2026 packet.cowboy · New York, NY </div>
+  </footer>
+
+</div>
+</body>
+</html>
