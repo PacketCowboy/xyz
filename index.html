@@ -4,7 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PACKETCOWBOY — packet.cowboy</title>
-<meta name="description" content="packet.cowboy — security work, Long Island brands, and hardware that has no business working as well as it does.">
+<meta name="description" content="packet.cowboy — security work, NYC &amp; Long Island brands, and hardware that has no business working as well as it does.">
+
+<!-- Link previews (Instagram, iMessage, Discord, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PACKETCOWBOY — packet.cowboy">
+<meta property="og:description" content="Packets by day, projects by night. Security work, NYC &amp; LI brands, and the gear I actually use.">
+<meta property="og:site_name" content="packet.cowboy">
+<!-- Add once you have a preview image (1200x630 works best):
+<meta property="og:image" content="https://YOUR-DOMAIN/og.png">
+<meta property="og:url" content="https://YOUR-DOMAIN/">
+-->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PACKETCOWBOY — packet.cowboy">
+<meta name="twitter:description" content="Packets by day, projects by night. Security work, NYC &amp; LI brands, and the gear I actually use.">
+<meta name="theme-color" content="#070907">
+
+<script>
+  /* Dial-up intro: once per browser session, skipped for reduced motion */
+  (function(){
+    try {
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce && !sessionStorage.getItem('pc_dialed')) {
+        document.documentElement.classList.add('dialing');
+      }
+    } catch(e) {}
+  })();
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤠</text></svg>">
 <style>
   :root{
@@ -15,13 +41,15 @@
     --fg-mid: #29a355;
     --accent: #ffb000;
     --accent-dim: #8a5f00;
+    --cyan: #4fd8ff;
+    --red: #ff5f56;
     --line: #163b22;
     --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   }
 
   *{ box-sizing: border-box; }
 
-  html{ background: var(--bg); }
+  html{ background: var(--bg); scroll-behavior: smooth; }
 
   body{
     margin: 0;
@@ -75,6 +103,7 @@
     border: 3px double var(--fg-mid);
     background: var(--panel);
     padding: 14px 16px;
+    scroll-margin-top: 16px;
   }
   .frame + .frame{ margin-top: 22px; }
 
@@ -87,7 +116,7 @@
     letter-spacing: 0.03em;
     color: var(--fg-mid);
   }
-  .statusbar .blink{
+  .blink{
     color: var(--accent);
     animation: blink 1.4s steps(1) infinite;
   }
@@ -113,6 +142,7 @@
   .tagline{
     margin: 18px auto 0;
     max-width: 46ch;
+    min-height: 3.2em;
     color: var(--fg-mid);
   }
   .tagline .cursor{
@@ -159,6 +189,12 @@
   /* ---- bulletin ---- */
   .bulletin p{ margin: 0 0 12px; color: var(--fg); }
   .bulletin p:last-child{ margin-bottom: 0; }
+  .bulletin .motto{
+    color: var(--accent);
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 12px;
+    text-shadow: 0 0 6px rgba(255,176,0,0.25);
+  }
   .bulletin .sig{ color: var(--fg-dim); }
 
   /* ---- main menu ---- */
@@ -181,30 +217,64 @@
     text-decoration: none;
   }
   nav.menu a:hover .key, nav.menu a:focus-visible .key{ text-decoration: underline; }
+  .menu-hint{
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--fg-dim);
+  }
   @media (max-width: 480px){
     nav.menu{ grid-template-columns: 1fr; }
+  }
+  @media (hover: none){
+    .menu-hint{ display: none; }
   }
 
   /* ---- directory listing ---- */
   .dir-row{
+    position: relative;
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 4px 16px;
-    padding: 10px 0;
+    padding: 10px 8px;
+    margin: 0 -8px;
     border-top: 1px solid var(--line);
+    transition: background 0.15s ease;
   }
-  .dir-row:first-of-type{ border-top: none; }
+  .divider + .dir-row{ border-top: none; }
+  .dir-row::before{
+    content: ">";
+    position: absolute;
+    left: -10px;
+    top: 10px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .dir-row:hover, .dir-row:focus-within{
+    background: rgba(60,255,122,0.06);
+  }
+  .dir-row:hover::before, .dir-row:focus-within::before{ opacity: 1; }
+
   .dir-name{ color: var(--accent); }
   .dir-name a{ color: inherit; }
   .dir-tag{
     color: var(--bg);
     background: var(--fg-mid);
     font-size: 11px;
+    font-weight: 700;
     letter-spacing: 0.05em;
     padding: 2px 6px;
     height: fit-content;
     align-self: start;
   }
+  .tag-live{ background: var(--fg); }
+  .tag-link{ background: var(--fg-mid); }
+  .tag-hw{ background: var(--fg); }
+  .tag-shop{ background: var(--accent); }
+  .tag-fw{ background: var(--cyan); }
+  .tag-edc{ background: var(--red); }
+  .tag-wip{ background: var(--accent); }
+
   .dir-desc{
     grid-column: 1 / -1;
     color: var(--fg-mid);
@@ -224,8 +294,55 @@
     text-align: center;
     font-size: 12px;
     color: var(--fg-dim);
+    line-height: 1.9;
   }
   footer a{ color: var(--fg-mid); }
+  footer .away{
+    margin: 4px auto 14px;
+    max-width: 34ch;
+    padding: 8px 12px;
+    border: 1px dashed var(--accent-dim);
+    color: var(--fg-mid);
+  }
+  footer .away-label{ color: var(--fg-dim); }
+  footer .away-msg{ color: var(--accent); }
+  footer .webring{ color: var(--fg-mid); }
+  footer .webring a{ color: var(--accent); }
+  footer .netscape{ font-style: italic; }
+
+  /* ---- 90s dial-up intro ---- */
+  html.dialing .boot > *{ animation-play-state: paused; }
+  #dialup{
+    position: fixed;
+    inset: 0;
+    z-index: 48;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.45s ease;
+  }
+  #dialup .term{
+    width: 100%;
+    max-width: 440px;
+    min-height: 13em;
+    margin: 0;
+    font-size: 14px;
+    white-space: pre-wrap;
+    text-shadow: 0 0 6px rgba(60,255,122,0.35);
+  }
+  #dialup .term .hi{ color: var(--accent); }
+  #dialup .skip{
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--fg-dim);
+  }
+  #dialup.done{ opacity: 0; pointer-events: none; }
 
   /* ---- boot-in sequence (single orchestrated moment) ---- */
   .boot > *{
@@ -243,12 +360,15 @@
   .boot > *:nth-child(8){ animation-delay: 1.10s; }
   .boot > *:nth-child(9){ animation-delay: 1.25s; }
   .boot > *:nth-child(10){ animation-delay: 1.40s; }
+  .boot > *:nth-child(n+11){ animation-delay: 1.55s; }
   @keyframes bootIn{ to{ opacity: 1; transform: translateY(0); } }
 
   @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
     .boot > *{ animation: none; opacity: 1; transform: none; }
     .blink, .tagline .cursor{ animation: none; }
     body::before{ display: none; }
+    .dir-row, .dir-row::before{ transition: none; }
   }
 
   @media (max-width: 640px){
@@ -263,7 +383,7 @@
 <div class="wrap boot">
 
   <div class="frame statusbar">
-    <span>PACKETCOWBOY BBS · Node 1 </span>
+    <span>PACKETCOWBOY · CONNECTED @ 56K</span>
     <span>STATUS: <span class="blink">ONLINE</span></span>
   </div>
 
@@ -282,7 +402,7 @@
     <pre class="ascii ascii-narrow" aria-hidden="true">╔═══════════════════════╗
 ║   PACKET . COWBOY     ║
 ╚═══════════════════════╝</pre>
-    <p class="tagline">&gt; packets by day, wrangling and tinkering my projects by night — security work, NYC & LI  brands, and builds that turn out intresting, sharing as I go<span class="cursor">&nbsp;</span></p>
+    <p class="tagline" id="tagline"><span id="tagline-text">&gt; packets by day, wrangling projects by night — security work, NYC &amp; LI brands, and builds that turn out interesting. Sharing as I go.</span><span class="cursor" aria-hidden="true">&nbsp;</span></p>
   </div>
 
   <div class="frame">
@@ -290,7 +410,7 @@
     <dl class="sysinfo">
       <dt>Handle</dt><dd>packet.cowboy</dd>
       <dt>Base</dt><dd>New York, NY <span class="accent">(NYC)</span></dd>
-      <dt>Day job</dt><dd>Analyst — IT/Cyber </dd>
+      <dt>Day job</dt><dd>Analyst — IT/Cyber</dd>
       <dt>Off the clock</dt><dd>tools, brands, and hardware under this handle</dd>
       <dt>Status</dt><dd><span class="accent">ONLINE</span></dd>
     </dl>
@@ -299,19 +419,21 @@
   <div class="frame">
     <div class="divider" style="margin-top:0;"><span>MAIN MENU</span></div>
     <nav class="menu" aria-label="Main">
-      <a href="#about"><span class="key">[1]</span>About</a>
-      <a href="#projects"><span class="key">[2]</span>Projects</a>
-      <a href="#gear"><span class="key">[3]</span>Gear</a>
-      <a href="#articles"><span class="key">[4]</span>Articles</a>
-      <a href="https://github.com/packetcowboy" target="_blank" rel="noopener noreferrer"><span class="key">[5]</span>Writeups / GitHub</a>
-      <a href="#contact"><span class="key">[6]</span>Contact</a>
+      <a href="#about" data-key="1"><span class="key">[1]</span>About</a>
+      <a href="#projects" data-key="2"><span class="key">[2]</span>Projects</a>
+      <a href="#now" data-key="3"><span class="key">[3]</span>On the Bench</a>
+      <a href="#gear" data-key="4"><span class="key">[4]</span>Gear</a>
+      <a href="https://github.com/packetcowboy" target="_blank" rel="noopener noreferrer" data-key="5"><span class="key">[5]</span>Writeups / GitHub</a>
+      <a href="#contact" data-key="6"><span class="key">[6]</span>Contact</a>
     </nav>
+    <p class="menu-hint">&gt; press a number key to jump</p>
   </div>
 
   <div id="about" class="frame bulletin">
     <div class="divider" style="margin-top:0;"><span>BULLETIN</span></div>
-    <p>Fourteen-plus years in IT, the last few years spent learning the cyber side from DFIR, IR, Threat Hunting, Reading Logs and more Logs, SOAR, Firewalls, data center hardware support and maintainence, and anything else that I can get my hands on and try out.</p>
-    <p>Off the clock, packet.cowboy is where the rest of it happens: security tooling, helping a handful of NYC & LI brands, wardriving and checking out signals of intrest. If it transmits ill look for it within reason. Everything below is live, shipped, or currently being built and debugged at 2am.</p>
+    <p>Fourteen-plus years in IT. The last few have been spent learning the cyber side: DFIR, incident response, threat hunting, reading logs (and more logs), SOAR, firewalls, data center hardware support and maintenance, and anything else I can get my hands on and try out.</p>
+    <p>Off the clock, packet.cowboy is where the rest of it happens: security tooling, helping a handful of NYC &amp; LI brands, wardriving, and checking out signals of interest. If it transmits, I'll look for it — within reason. Everything below is live, shipped, or currently being built and debugged at 2am.</p>
+    <p class="motto">&gt; build it. break it. but above all, have fun.<br>&gt; help others along the way — and yourself while you're at it.<br>&gt; all of this is for the love of the game. this is the way.</p>
     <p class="sig">— T.</p>
   </div>
 
@@ -320,22 +442,38 @@
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://9to5tech.info" target="_blank" rel="noopener noreferrer">9TO5TECH.INFO</a></div>
-      <div class="dir-tag">LIVE</div>
+      <div class="dir-tag tag-live">LIVE</div>
       <div class="dir-desc">The latest tech resources: a curated AI tools list, blog, and newsletter.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://631mediagroup.com" target="_blank" rel="noopener noreferrer">631MEDIAGROUP.COM</a></div>
-      <div class="dir-tag">LIVE</div>
+      <div class="dir-tag tag-live">LIVE</div>
       <div class="dir-desc">Tech &amp; digital solutions for Long Island small businesses.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://github.com/packetcowboy" target="_blank" rel="noopener noreferrer">GITHUB.COM/PACKETCOWBOY</a></div>
-      <div class="dir-tag">LINK</div>
+      <div class="dir-tag tag-link">LINK</div>
       <div class="dir-desc">Open-source security resources, guides, and training tools.</div>
     </div>
+  </div>
 
+  <div id="now" class="frame">
+    <div class="divider" style="margin-top:0;"><span>ON THE BENCH</span></div>
+
+    <!-- Edit these to whatever you're actually working on -->
+    <div class="dir-row">
+      <div class="dir-name">WARDRIVING RIG</div>
+      <div class="dir-tag tag-wip">🚧 UNDER CONSTRUCTION</div>
+      <div class="dir-desc">GPS-tagged Wi-Fi/BLE survey setup — tuning hardware, mapping results to WiGLE.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name">ESP32-C5 EXPERIMENTS</div>
+      <div class="dir-tag tag-wip">🚧 UNDER CONSTRUCTION</div>
+      <div class="dir-desc">Testing 5 GHz-capable firmware on the new C5 boards and seeing what they can really do.</div>
+    </div>
   </div>
 
   <div id="gear" class="frame">
@@ -343,92 +481,91 @@
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://flipperzero.one" target="_blank" rel="noopener noreferrer">FLIPPER ZERO</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">RFID, NFC, sub-GHz, IR, BadUSB — the multitool that started it.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://awokdynamics.com/" target="_blank" rel="noopener noreferrer">AWOK DUAL TOUCH V3</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">WiFi/BLE wardriving add-on for the Flipper, GPS-tagged, WiGLE-compatible.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://rabbit-labs.com" target="_blank" rel="noopener noreferrer">RABBIT LABS</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">Flux Capacitor amplified sub-GHz module — stretches Flipper radio range well past stock.</div>
     </div>
 
     <div class="dir-row">
-      <div class="dir-name"><a href="https://halehound.com/" target="_blank" rel="noopener noreferrer">HALEHOUND</a></div>
-      <div class="dir-tag">FIRMWARE</div>
-      <div class="dir-desc">Multi-protocol offensive security firmware for the ESP32 Cheap Yellow Display.</div>
-    </div>
-
-    <div class="dir-row">
-      <div class="dir-name"><a href="https://midwestgadgets.org" target="_blank" rel="noopener noreferrer">MIDWESTERN GADGETS</a></div>
-      <div class="dir-tag">SHOP</div>
-      <div class="dir-desc">NFC repeaters, amplifiers, and field detectors — small-batch, maker-built.</div>
-    </div>
-
-    <div class="dir-row">
-      <div class="dir-name"><a href="https://justcallmekokollc.com/" target="_blank" rel="noopener noreferrer">JCMK</a></div>
-      <div class="dir-tag">SHOP</div>
-      <div class="dir-desc">ESP32 Marauder boards and accessories — Wi-Fi/BLE testing gear from Just Call Me Koko.</div>
-    </div>
-
-    <div class="dir-row">
       <div class="dir-name"><a href="https://infishark.com/" target="_blank" rel="noopener noreferrer">BLESHARK NANO</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">Pocket Wi-Fi, BLE, and IR multitool from InfiShark, with ESP-NOW mesh across multiple units.</div>
     </div>
 
     <div class="dir-row">
-      <div class="dir-name"><a href="https://biscuitshop.us/" target="_blank" rel="noopener noreferrer">BISCUIT SHOP</a></div>
-      <div class="dir-tag">SHOP</div>
-      <div class="dir-desc">Biscuit Pro, Ultra, and Crumb wardriving rigs, app-controlled and shipped from the USA.</div>
-    </div>
-
-    <div class="dir-row">
-      <div class="dir-name"><a href="https://covertinstruments.com/collections/covert-companion" target="_blank" rel="noopener noreferrer">COVERT COMPANION</a></div>
-      <div class="dir-tag">EDC</div>
-      <div class="dir-desc">Slim everyday-carry pick and bypass kit from Covert Instruments.</div>
-    </div>
-
-    <div class="dir-row">
       <div class="dir-name"><a href="https://lilygo.cc/en-us/products/t-dongle-c5" target="_blank" rel="noopener noreferrer">LILYGO T-DONGLE C5</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">ESP32-C5 USB dongle with dual-band 2.4/5 GHz Wi-Fi 6 and a tiny screen. Cheap, and runs Biscuit DIY firmware.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="https://poom.stellar-iot.com/" target="_blank" rel="noopener noreferrer">POOM</a></div>
-      <div class="dir-tag">HARDWARE</div>
+      <div class="dir-tag tag-hw">HARDWARE</div>
       <div class="dir-desc">Open-source ESP32-C5 multitool from Stellar-IoT for pentesting, gaming, and building.</div>
     </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://halehound.com/" target="_blank" rel="noopener noreferrer">HALEHOUND</a></div>
+      <div class="dir-tag tag-fw">FIRMWARE</div>
+      <div class="dir-desc">Multi-protocol offensive security firmware for the ESP32 Cheap Yellow Display.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://biscuitshop.us/" target="_blank" rel="noopener noreferrer">BISCUIT SHOP</a></div>
+      <div class="dir-tag tag-shop">SHOP</div>
+      <div class="dir-desc">Biscuit Pro, Ultra, and Crumb wardriving rigs, app-controlled and shipped from the USA.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://midwestgadgets.org" target="_blank" rel="noopener noreferrer">MIDWESTERN GADGETS</a></div>
+      <div class="dir-tag tag-shop">SHOP</div>
+      <div class="dir-desc">NFC repeaters, amplifiers, and field detectors — small-batch, maker-built.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://justcallmekokollc.com/" target="_blank" rel="noopener noreferrer">JCMK</a></div>
+      <div class="dir-tag tag-shop">SHOP</div>
+      <div class="dir-desc">ESP32 Marauder boards and accessories — Wi-Fi/BLE testing gear from Just Call Me Koko.</div>
+    </div>
+
+    <div class="dir-row">
+      <div class="dir-name"><a href="https://covertinstruments.com/collections/covert-companion" target="_blank" rel="noopener noreferrer">COVERT COMPANION</a></div>
+      <div class="dir-tag tag-edc">EDC</div>
+      <div class="dir-desc">Slim everyday-carry pick and bypass kit from Covert Instruments.</div>
+    </div>
   </div>
+
+  <!--
+    COOL ARTICLES / GITHUBS — hidden until you have real links.
+    To bring it back: uncomment this block and add a menu item pointing to #articles.
 
   <div id="articles" class="frame">
     <div class="divider" style="margin-top:0;"><span>COOL ARTICLES / GITHUBS</span></div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
-      <div class="dir-tag">ARTICLE</div>
+      <div class="dir-tag tag-link">ARTICLE</div>
       <div class="dir-desc">One line on why it's worth a look.</div>
     </div>
 
     <div class="dir-row">
       <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
-      <div class="dir-tag">GITHUB</div>
-      <div class="dir-desc">One line on why it's worth a look.</div>
-    </div>
-
-    <div class="dir-row">
-      <div class="dir-name"><a href="#">TITLE OR REPO NAME</a></div>
-      <div class="dir-tag">ARTICLE</div>
+      <div class="dir-tag tag-fw">GITHUB</div>
       <div class="dir-desc">One line on why it's worth a look.</div>
     </div>
   </div>
+  -->
 
   <div id="contact" class="frame">
     <div class="divider" style="margin-top:0;"><span>MAIL / SOCIAL</span></div>
@@ -443,9 +580,106 @@
   </div>
 
   <footer>
-    <div>(c) 2026 packet.cowboy · New York, NY </div>
+    <div class="away">
+      <span class="away-label">packet.cowboy's away message:</span><br>
+      <span class="away-msg">don't forget to compliment a stranger today :)</span>
+    </div>
+    <div class="webring">[ &larr; <a href="https://631mediagroup.com" target="_blank" rel="noopener noreferrer">prev</a> | packet.cowboy webring | <a href="https://9to5tech.info" target="_blank" rel="noopener noreferrer">next</a> &rarr; ]</div>
+    <div class="netscape">best viewed in Netscape Navigator at 800&times;600</div>
+    <div>Last transmission: Nov 2026 · (c) 2026 packet.cowboy · New York, NY</div>
   </footer>
 
 </div>
+
+<script>
+(function(){
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- typed tagline ---- */
+  var tagline = document.getElementById('tagline');
+  var textEl = document.getElementById('tagline-text');
+  var typeTagline = function(){};
+  if (tagline && textEl && !reduceMotion) {
+    var full = textEl.textContent;
+    tagline.setAttribute('aria-label', full);
+    textEl.setAttribute('aria-hidden', 'true');
+    textEl.textContent = '';
+    var i = 0;
+    var type = function(){
+      if (i <= full.length) {
+        textEl.textContent = full.slice(0, i);
+        i++;
+        setTimeout(type, 22 + Math.random() * 30);
+      }
+    };
+    typeTagline = function(){ setTimeout(type, 600); };
+  }
+
+  /* ---- 90s dial-up intro ---- */
+  var root = document.documentElement;
+  if (!root.classList.contains('dialing')) {
+    typeTagline();
+  } else {
+    var overlay = document.createElement('div');
+    overlay.id = 'dialup';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML = '<pre class="term"></pre><div class="skip">click or press any key to skip</div>';
+    document.body.appendChild(overlay);
+    var term = overlay.querySelector('.term');
+
+    var script = [
+      ['ATZ', 350],
+      ['OK', 300],
+      ['ATDT 1-631-555-0199', 700],
+      ['DIALING...', 650],
+      ['*** eeeeEEEE-kshhhh-bong-bong-KRRRSHHHH ***', 1100],
+      ['CONNECT 56000/V.90', 450],
+      ['Handshaking with packet.cowboy...', 600],
+      ['<span class="hi">You\'ve got packets. 🤠</span>', 700]
+    ];
+
+    var finished = false;
+    var finish = function(){
+      if (finished) return;
+      finished = true;
+      try { sessionStorage.setItem('pc_dialed', '1'); } catch(e) {}
+      overlay.classList.add('done');
+      root.classList.remove('dialing');
+      typeTagline();
+      setTimeout(function(){ if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 500);
+      document.removeEventListener('keydown', skipKey, true);
+    };
+    var skipKey = function(e){ e.preventDefault(); e.stopPropagation(); finish(); };
+    overlay.addEventListener('click', finish);
+    document.addEventListener('keydown', skipKey, true);
+
+    var line = 0;
+    var next = function(){
+      if (finished) return;
+      if (line < script.length) {
+        term.innerHTML += (line ? '\n' : '') + script[line][0];
+        var wait = script[line][1];
+        line++;
+        setTimeout(next, wait);
+      } else {
+        finish();
+      }
+    };
+    setTimeout(next, 250);
+  }
+
+  /* ---- number-key menu shortcuts ---- */
+  document.addEventListener('keydown', function(e){
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    var link = document.querySelector('nav.menu a[data-key="' + e.key + '"]');
+    if (link) {
+      e.preventDefault();
+      link.click();
+    }
+  });
+})();
+</script>
 </body>
 </html>
